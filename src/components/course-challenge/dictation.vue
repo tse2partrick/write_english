@@ -1,0 +1,318 @@
+<template>
+  <transition name="slide">
+    <scroll :data="perfectArr" class="dictation" ref="dictation">
+      <div>
+        <top :title="getTitle" :backMethodCustom="backMethodCustom" @back="onBack"></top>
+        <div class="sub-title">{{getSubTitle}}</div>
+        <div class="content-wrapper" v-show="!endFlag">
+          <div class="content" v-for="(item, index) in shuffleRemoteData" v-show="index === currentIndex">
+            <div class="title">
+              <span @click="speak(item.nons)" v-if="showAnswer">{{item.cWord}}</span>
+              <span @click="speak(item.nons)">
+                <i class="iconfont icon-shengyin" v-show="!playing"></i>
+                <i class="iconfont icon-shengyin1" v-show="playing"></i>
+              </span>
+            </div>
+            <p class="word-right" :class="{'hidden': !showAnswer || nullAnswer}">{{item.eWord}}</p>
+          </div>
+          <div class="content-input">
+            <input type="text" class="user_write" ref="userWrite" />
+            <span class="btn" @click="test" v-show="!showAnswer || nullAnswer" ref="testBtn">提交</span>
+            <span class="btn" @click="next" v-show="showAnswer && !nullAnswer" ref="nextBtn">下一题</span>
+            <p class="answer" :class="{'hidden': !showAnswer}">{{getTestAnswer}}</p>
+            <p class="answer" :class="{'hidden': !nullAnswer}" ref="nonTip">请输入单词再提交</p>
+          </div>
+        </div>
+        <div class="endFlag" v-show="endFlag">
+          <table v-show="wrongArr.length" class="haveWrong">
+            <caption>写错了{{wrongArr.length}}个单词</caption>
+            <tr>
+              <th>写错单词</th>
+              <th>正确单词</th>
+              <!-- <th>释义</th> -->
+            </tr>
+            <tr v-for="item in wrongArr">
+              <td v-html="item.wrongWord"></td>
+              <td v-html="item.trueEWord"></td>
+              <!-- 移动端空间不够 <td v-html="item.trueCWord"></td> -->
+            </tr>
+            <tr>
+              <td colspan="2">
+                <button class="btn" @click="restart">重新挑战</button>
+                <button class="btn" @click="btnNextCourse" v-show="getCourseendFlag">挑战下一关</button>
+              </td>
+            </tr>
+          </table>
+          <div class="perfect" v-show="!wrongArr.length">
+            <span class="perfectTip">{{perfectArr[Math.random() * 3 | 0]}}</span>
+            <button class="btn btn-in-table" @click="restart">再加深一遍</button>
+            <button class="btn btn-in-table" @click="btnNextCourse" v-show="getCourseendFlag">挑战下一关</button>
+          </div>
+        </div>
+        <audio ref="audio" @ended="onPlayEnd"></audio>
+      </div>
+    </scroll>
+  </transition>
+</template>
+
+<script>
+  import Top from 'base/top/top'
+  import Scroll from 'base/scroll/scroll'
+  import animations from 'create-keyframe-animation'
+  import {mapGetters, mapMutations} from 'vuex'
+  import {prefixStyle} from 'common/js/util'
+  import {getWordsMixin, challengeMixin} from 'common/js/mixins'
+  import {Mode} from 'common/js/config'
+
+  const ANIMATION = prefixStyle('animation')
+  export default {
+    mixins: [getWordsMixin, challengeMixin],
+    data() {
+      return {
+        currentIndex: 0,
+        answer: '',
+        showAnswer: false,
+        nullAnswer: false,
+        score: 0,
+        endFlag: false,
+        wrongArr: [],
+        perfectArr: ['厉害了，全对！', '完美！请再接再厉', 'Perfect!!!', '求求你把我打通关吧'],
+        mode: Mode.dictation.cName,
+        backMethodCustom: true,
+        playing: false
+      }
+    },
+    created() {
+      if (!this.currentCourses.class_id) {
+        console.log('无id - ' + this.currentCourses)
+        /* this.$router.push({
+          path: '/write'
+        }) */
+      }
+      console.log(this.shuffleRemoteData)
+    },
+    mounted() {
+      this._init()
+      this.answer = this.$refs.userWrite.value
+      this.$refs.userWrite.addEventListener('keydown', (e) => {
+        this.nullAnswer = false
+        if (e.keyCode === 13) {
+          this.showAnswer ? this.next() : this.test()
+        }
+      })
+    },
+    computed: {
+      getCourseendFlag() {
+        return this.currentCourse === this.currentClasses.length ? '' : 'false'
+      },
+      getTitle() {
+        return this.currentCourses.name + ' - 第' + this.currentCourse + '课'
+      },
+      getSubTitle() {
+        return this.endFlag ? '测试结果' : Mode.dictation.cName
+      },
+      getTestAnswer() {
+        if (!this.answer) {
+          return
+        }
+        if (this.endFlag) {
+          return
+        }
+        return this.answer.toLowerCase() === this.shuffleRemoteData[this.currentIndex]['eWord'].toLowerCase() ? '正确' : '错误'
+      },
+      ...mapGetters([
+        'currentClasses',
+        'currentCourses',
+        'currentCourse',
+        'remoteData'
+      ])
+    },
+    methods: {
+      onPlayEnd() {
+        this.playing = false
+      },
+      onBack() {
+        this.$router.push({
+          path: `/courses/${this.currentCourse}`
+        })
+      },
+      test() {
+        this.$refs.userWrite.focus()
+        this.answer = this.$refs.userWrite.value
+        if (!this.answer) {
+          this.nullAnswer = true
+
+          let animation = {
+            0: {
+              transform: 'translate3d(5px, 0, 0)'
+            },
+            20: {
+              transform: 'translate3d(-5px, 0, 0)'
+            },
+            40: {
+              transform: 'translate3d(5px, 0, 0)'
+            },
+            60: {
+              transform: 'translate3d(-5px, 0, 0)'
+            },
+            80: {
+              transform: 'translate3d(5px, 0, 0)'
+            },
+            100: {
+              transform: 'translate3d(0, 0, 0)'
+            }
+          }
+          animations.registerAnimation({
+            name: 'shake',
+            animation,
+            presets: {
+              duration: 300,
+              easing: 'linear'
+            }
+          })
+          animations.runAnimation(this.$refs.nonTip, 'shake', () => {
+            animations.unregisterAnimation('shake')
+            this.$refs.nonTip.style[ANIMATION] = ''
+          })
+          return
+        }
+        if (this.answer.toLowerCase() === this.shuffleRemoteData[this.currentIndex]['eWord'].toLowerCase()) {
+          this.score++
+        } else {
+          this.wrongArr.push({
+            wrongWord: this.answer,
+            trueEWord: this.shuffleRemoteData[this.currentIndex]['eWord']
+            // trueCWord: this.remoteData[this.currentIndex]['cWord']
+          })
+        }
+        this.showAnswer = true
+      },
+      next() {
+        this._nextInit()
+        this.currentIndex++
+        if (this.currentIndex === this.shuffleRemoteData.length) {
+          this.endFlag = true
+          this.end()
+        }
+
+        let nons = this.shuffleRemoteData[this.currentIndex].nons
+        this.speak(nons)
+      },
+      speak(nons) {
+        this.playing = true
+        if (this.$refs.audio.src === nons) {
+          this.$refs.audio.play()
+          return
+        }
+        this.$refs.audio.src = nons
+        this.$refs.audio.play()
+      },
+      end() {
+        if (this.score === this.shuffleRemoteData.length) {
+          this._lightStar(Mode.dictation.eName)
+        }
+        setTimeout(() => {
+          this.$refs.dictation.refresh()
+        }, 20)
+      },
+      restart() {
+        this._init()
+      },
+      btnNextCourse() {
+        this._init()
+        let course = this.currentCourse + 1
+        this.setCurrentCourse(course)
+        this._getWords()
+        this.$router.push({
+          path: `/courses/${this.currentCourse}/${Mode.dictation.eName}`
+        })
+        this._setLearning()
+      },
+      _init() {
+        this._nextInit()
+        this.currentIndex = 0
+        this.endFlag = false
+        this.wrongArr = []
+        this.speak(this.shuffleRemoteData[0].nons)
+      },
+      _nextInit() {
+        this.showAnswer = false
+        this.$refs.userWrite.value = ''
+        this.$refs.userWrite.focus()
+      },
+      ...mapMutations({
+        'setCurrentCourse': 'SET_CURRENT_COURSE'
+      })
+    },
+    components: {
+      Top,
+      Scroll
+    }
+  }
+</script>
+
+<style lang="stylus" scoped>
+  @import "~common/stylus/variable"
+  .hidden
+    visibility: hidden
+  .btn
+    display: inline-block
+    padding: 10px
+    margin: 20px
+    background: #000
+    border-radius: 5px
+    color: #FFF
+    font-size: $font-size-large
+  .dictation
+    position: fixed
+    top: 0
+    bottom: 0
+    width: 100%
+    background: $color-background
+    .sub-title
+      text-align: center
+    .content-wrapper
+      position: relative
+      bottom: 50px
+      height: 100%
+      font-size: $font-size-large-x
+      .content
+        margin: 0 auto
+        margin-top: 150px
+        text-align: center
+        .title
+          margin-bottom: 20px
+      .content-input
+        text-align: center
+        .user_write
+          background: none
+          color: #fff
+          margin-top: 30px
+          margin-bottom: 10px
+          border-bottom: 1px solid #fff
+    .endFlag
+      position: relative
+      display: flex
+      bottom: 50px
+      height: 100%
+      .haveWrong
+        margin-top: 50px
+        width: 100%
+        text-align: left
+        & caption
+          margin: 20px 0
+        & tr th
+          padding: 5px
+        & tr td
+          padding: 5px
+        & tr:last-child td
+          text-align: center
+          padding-top: 20px
+          .btn-in-table
+            width: 200px
+            margin: 0 20px
+  .slide-enter-active, .slide-leave-active
+    transition: all 0.3s
+  .slide-enter, .slide-leave-to
+    transform: translate3d(100%, 0, 0)
+</style>
