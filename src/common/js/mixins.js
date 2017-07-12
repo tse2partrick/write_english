@@ -1,7 +1,7 @@
 import {mapGetters, mapMutations, mapActions} from 'vuex'
 import {getWords} from 'datas/words'
 import {shuffle} from './util'
-import {Mode} from './config'
+import {challengeMode, showMode, CSS} from './config'
 import weStore from 'common/js/localforage'
 export const getWordsMixin = {
   computed: {
@@ -166,7 +166,7 @@ export const challengeMixin = {
       let num = this.needUnlock + 1
       this.setNeedUnlock(num)
 
-      challengeName = challengeName === Mode.recall.eName ? Mode.recall.eName : challengeName === Mode.dictation.eName ? Mode.dictation.eName : Mode.lineMatch.eName
+      challengeName = challengeName === challengeMode.recall.eName ? challengeMode.recall.eName : challengeName === challengeMode.dictation.eName ? challengeMode.dictation.eName : challengeMode.lineMatch.eName
 
       /* let course = `${this.currentCourses.class_id}-${this.currentCourse}`
       weStore.getItem(course).then((val) => {
@@ -234,10 +234,62 @@ export const challengeMixin = {
       }).catch((err) => {
         console.log('js mixins fnc _setLearning() err: ' + err)
       })
+
+      localStorage.setItem(this.learningName, JSON.stringify(learning))
     },
     ...mapMutations({
       'setNeedUnlock': 'SET_NEED_UNLOCK',
       'setNeedLightStar': 'SET_NEED_LIGHT_STAR'
+    })
+  }
+}
+
+export const showModeMixin = {
+  created() {
+    // this._setMode()
+  },
+  computed: {
+    // single-select option style
+    getDaySSOSty() {
+      return this.mode === showMode.day ? {'background': CSS.day.colorThemeLight, 'color': CSS.day.colorWhite} : ''
+    },
+
+    // single-select style
+    getDaySSSty() {
+      return this.mode === showMode.day ? {'background': CSS.day.colorTheme, 'color': CSS.day.colorWhite} : ''
+    },
+    getDayBlackWordSty() {
+      return this.mode === showMode.day ? {'color': CSS.day.colorBlack} : ''
+    },
+    getNightColorWhiteSty() {
+      return this.mode === showMode.night ? {'border-color': CSS.night.colorWhite, 'color': CSS.night.colorWhite} : ''
+    },
+    getShowModeCls() {
+      return this.mode === showMode.day ? 'iconfont icon-taiyang' : 'iconfont icon-yueliang'
+    },
+    getWHeaderSty() {
+      return this.mode === showMode.day ? {'color': CSS.day.colorWhite, 'background': CSS.day.colorTheme} : ''
+    },
+    getDayColorThemeSty() {
+      return this.mode === showMode.day ? {'color': CSS.day.colorTheme} : ''
+    },
+    getDayBackgroundSty() {
+      return this.mode === showMode.day ? {'background': CSS.day.background} : ''
+    },
+    getDayBackgroundMenuSty() {
+      return this.mode === showMode.day ? {'background': CSS.day.backgroundMenu, 'color': CSS.day.colorWhite} : ''
+    },
+    ...mapGetters([
+      'mode'
+    ])
+  },
+  methods: {
+    _setMode() {
+      let mode = localStorage.getItem('mode')
+      this.setMode(mode)
+    },
+    ...mapMutations({
+      'setMode': 'SET_MODE'
     })
   }
 }

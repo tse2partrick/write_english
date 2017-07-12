@@ -33,6 +33,10 @@ const mutations = {
   },
   [types.SET_NEED_LIGHT_STAR](state, num) {
     state.needLightStar = num
+  },
+  [types.SET_MODE](state, mode) {
+    state.mode = mode
+    localStorage.setItem('mode', mode)
   }
 }
 

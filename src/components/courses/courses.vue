@@ -22,7 +22,7 @@
     mixins: [getWordsMixin],
     data() {
       return {
-        backMethodCustom: true
+        backMethodCustom: false
       }
     },
     created() {

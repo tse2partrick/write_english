@@ -1,12 +1,12 @@
 <template>
   <transition name="up">
     <div class="single-select" ref="singleSelect">
-      <div class="optionTitle" v-html="title" @click.stop="toggleShow" ref="optionTitle"></div>
-      <div class="option-wrapper" v-show="showFlag" ref="optionWrapper">
+      <div class="optionTitle" v-html="title" @click.stop="toggleShow" ref="optionTitle" :style="getDaySSSty"></div>
+      <div class="option-wrapper" v-show="showFlag" ref="optionWrapper" :style="getDaySSSty">
         <div class="option" v-for="option in options" @click="showOption(option.cName)">
           <span class="text">
             {{option.cName}}
-            <i class="istar iconfont icon-xing" :data-belong="option.eName" ref="iStar"></i>
+            <i class="istar iconfont icon-xing" :data-belong="option.eName" ref="iStar" :style="{'opacity': 0}"></i>
           </span>
         </div>
       </div>
@@ -17,7 +17,9 @@
 <script>
   import {mapGetters} from 'vuex'
   import {addClass} from 'common/js/util'
+  import {showModeMixin} from 'common/js/mixins'
   export default {
+    mixins: [showModeMixin],
     props: {
       title: {
         type: String,
@@ -70,6 +72,7 @@
       },
       toggleShow() {
         this.showFlag ? this.hide() : this.show()
+        console.log('show option')
       },
       show() {
         this.showFlag = true
@@ -99,17 +102,20 @@
     .optionTitle
       position: relative
       padding: 15px
-      border: 1px solid #fff
+      border: 1px solid $n-colorWhite
+      color: $n-colorWhite
+      background: $n-background
       text-align: center
     .option-wrapper
       position: absolute
       display: flex
       flex-direction: column
-      background: #000
+      color: $n-colorWhite
+      background: $n-background
       width: 100%
       .option
         padding: 15px
-        border: 1px solid #fff
+        border: 1px solid $n-colorWhite
         display: flex
         .text
           position: relative
@@ -119,5 +125,6 @@
           .istar
             float: right
           .lighed
-            color: $color-D-star-light = deepskyblue
+            color: $n-colorStarLight
+            opacity: 1 !important
 </style>
