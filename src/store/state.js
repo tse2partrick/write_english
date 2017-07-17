@@ -1,3 +1,4 @@
+import {showMode} from 'common/js/config'
 const state = {
   currentClasses: [],
   currentCourses: {},
@@ -9,7 +10,8 @@ const state = {
   cWordsArr: [],
   nonsArr: [],
   needUnlock: 0,
-  needLightStar: 0
+  needLightStar: 0,
+  mode: localStorage.getItem('mode') || showMode.day
 }
 
 export default state

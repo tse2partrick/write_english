@@ -6,8 +6,12 @@ import store from './store'
 import fastclick from 'fastclick'
 import 'common/stylus/index.styl'
 import 'common/fonts/iconfont.css'
+
+// import vConsole from 'vconsole'
+
 fastclick.attach(document.body)
-Vue.config.productionTip = false
+// Vue.config.productionTip = false
+Vue.use(vConsole)
 
 /* eslint-disable no-new */
 new Vue({

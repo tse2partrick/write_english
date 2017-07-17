@@ -2,10 +2,10 @@
   <transition name="slide">
     <div class="menu-detail-wrapper">
       <top :title="currentClasses.master" :backMethodCustom="backMethodCustom" @back="onBack"></top>
-      <scroll :data="currentClasses.children || []" ref="scroll" class="menu-detail">
+      <scroll :data="currentClasses.children || []" ref="scroll" class="menu-detail" :style="getDayBackgroundSty">
         <div class="children-wrapper" ref="childrenWrapper">
           <ul class="children" v-for="(item, index) in currentClasses.children">
-            <li class="children-inner" @click="start(item, index)">
+            <li class="children-inner" @click="start(item, index)" :style="getDayBackgroundMenuSty">
               <span class="children-text">{{item.name}}</span>
             </li>
           </ul>
@@ -19,7 +19,9 @@
   import {mapGetters, mapMutations} from 'vuex'
   import Scroll from 'base/scroll/scroll'
   import Top from 'base/top/top'
+  import {showModeMixin} from 'common/js/mixins'
   export default {
+    mixins: [showModeMixin],
     data() {
       return {
         backMethodCustom: true
@@ -70,7 +72,7 @@
     .menu-detail
       height: 100%
       overflow: hidden
-      background: $color-background
+      background: #333
       .children-wrapper
         position: relative
         .children
@@ -83,6 +85,10 @@
             width: 200px
             height: 100px
             margin: 0 auto
+            color:  #333
+            font-size: $font-size-large
+            background: linear-gradient(#d3d7d4, #aaa)
+            border-radius: 10px
             .children-text
               margin: auto
   .slide-enter-active, .slide-leave-active

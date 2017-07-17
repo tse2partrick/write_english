@@ -1,6 +1,6 @@
 <template>
   <transition name="slide">
-    <div class="line-match" ref="lineMatch">
+    <div class="line-match" ref="lineMatch" :style="getDayBackgroundSty">
       <top :title="getTitle" :backMethodCustom="backMethodCustom" @back="onBack"></top>
       <div class="sub-title">
         <span>{{getSubTitle}}</span>
@@ -23,8 +23,8 @@
         </tr>
       </table>
       <div class="btn-group">
-        <span @click.stop="btnNextCourse" v-show="end && score === 20" class="btn">{{getPass}}</span>
-        <span @click.stop="next" v-show="showAnswer" class="btn">{{getNext}}</span>
+        <span @click.stop="btnNextCourse" v-show="end && score === remoteData.length" class="btn" :style="getDayBackgroundMenuSty">{{getPass}}</span>
+        <span @click.stop="next" v-show="showAnswer" class="btn" :style="getDayBackgroundMenuSty">{{getNext}}</span>
       </div>
     </div>
   </transition>
@@ -34,9 +34,9 @@
   import Scroll from 'base/scroll/scroll'
   import Top from 'base/top/top'
   import {mapGetters, mapMutations} from 'vuex'
-  import {Mode} from 'common/js/config'
+  import {challengeMode, CSS} from 'common/js/config'
   import {shuffle} from 'common/js/util'
-  import {getWordsMixin, challengeMixin} from 'common/js/mixins'
+  import {getWordsMixin, challengeMixin, showModeMixin} from 'common/js/mixins'
 
   const PAGE_SHOW_NUM = 5
   const TOP_HEIGHT = 50
@@ -45,7 +45,7 @@
   const TRUE_COLOR = 'darkgreen'
   const WRONG_COLOR = 'darkred'
   export default {
-    mixins: [getWordsMixin, challengeMixin],
+    mixins: [getWordsMixin, challengeMixin, showModeMixin],
     data() {
       return {
         shuffleWordsArr: [],
@@ -61,7 +61,7 @@
         touches: {},
         ctx: null,
         score: 0,
-        backMethodCustom: true
+        backMethodCustom: false
       }
     },
     computed: {
@@ -75,7 +75,7 @@
         return this.currentCourses.name + ' - 第' + this.currentCourse + '课'
       },
       getSubTitle() {
-        return Mode.lineMatch.cName + ' - ' + (this.currentPage + 1) + '/' + this.totalPage
+        return challengeMode.lineMatch.cName + ' - ' + (this.currentPage + 1) + '/' + this.totalPage
       },
       ...mapGetters([
         'currentCourseses',
@@ -83,7 +83,8 @@
         'currentCourse',
         'remoteData',
         'cWordsArr',
-        'eWordsArr'
+        'eWordsArr',
+        'mode'
       ])
     },
     created() {
@@ -170,7 +171,7 @@
         })
         this.testArr = []
 
-        this.ctx.strokeStyle = '#FFF'
+        this.ctx.strokeStyle = CSS.day.colorStarLight
         this.ctx.beginPath()
         this.ctx.moveTo(this.touches.x1, this.touches.y1)
         this.ctx.lineTo(this.touches.x2, this.touches.y2)
@@ -199,7 +200,7 @@
 
             // 满分解锁星星
             if (this.score === this.remoteData.length) {
-              this._lightStar(Mode.lineMatch.eName)
+              this._lightStar(challengeMode.lineMatch.eName)
             }
             return
           }
@@ -237,7 +238,7 @@
         this.setCurrentCourse(course)
         this._getWords()
         this.$router.push({
-          path: `/courses/${this.currentCourse}/${Mode.lineMatch.eName}`
+          path: `/courses/${this.currentCourse}`
         })
 
         this._setLearning()
@@ -272,10 +273,12 @@
         // console.log(width + ' - ' + height)
         // DOM变化后才设置高 否则高度是0
         this.$nextTick(() => {
-          let width = this.$refs.content.clientWidth
-          let height = this.$refs.content.clientHeight
-          this.$refs.cvs.setAttribute('width', width)
-          this.$refs.cvs.setAttribute('height', height)
+          // let width = this.$refs.content.clientWidth
+          // let height = this.$refs.content.clientHeight
+
+          // 直接设置高度，不管匹配的高度是多少，设置zIndex为-1
+          this.$refs.cvs.setAttribute('width', 1000)
+          this.$refs.cvs.setAttribute('height', 1000)
         })
         // this.$refs.cvs.style.bottom = -(TOP_HEIGHT / 2) + 'px'
       },
@@ -333,12 +336,13 @@
     bottom: 0
     height: 100%
     width: 100%
-    background: #000
+    background: $n-background
     .sub-title
       text-align: center
       padding: 30px
     .cvs
       position: absolute
+      z-index: -1
     .content
       text-align: center
       width: 100%
@@ -351,7 +355,7 @@
             display: inline-block
             padding: 15px
             width: 70%
-            border: 1px solid #fff
+            border: 1px solid $n-colorTheme
             margin: 15px 0
             float: left
             .numR
@@ -361,7 +365,9 @@
           .right
             float: right
           .clicked
-            background: #666
+            border: 1px solid $n-colorWhite
+            color: $n-colorWhite
+            background: $n-clicked
     .btn-group
       position: absolute
       left: 30%
@@ -374,14 +380,13 @@
       .btn
         position: relative
         top: 90%
+        margin: 20px
         display: inline-block
         padding: 10px
-        margin: 20px
-        background: #000
-        border-radius: 5px
-        color: #FFF
+        color:  $n-colorWhite
         font-size: $font-size-large
-        border: 1px solid #FFF
+        border: 1px solid $n-colorTheme
+        border-radius: 10px
   .slide-enter-active, .slide-leave-active
     transition: all 0.3s
   .slide-enter, .slide-leave-to

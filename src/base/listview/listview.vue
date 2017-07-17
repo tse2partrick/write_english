@@ -1,8 +1,8 @@
 <template>
   <div class="listview">
-    <scroll :data="courses" class="courses">
+    <scroll :data="courses" class="courses" :style="getDayBackgroundSty">
       <div class="course-wrapper">
-        <div class="course-inner" v-for="(item, index) in courses" @click="start(item, index)">
+        <div class="course-inner" v-for="(item, index) in courses" @click="start(item, index)" ref="courseInner">
           <div class="title">
             <span class="text">第{{item}}课</span>
           </div>
@@ -24,9 +24,11 @@
   import {mapGetters} from 'vuex'
   import {removeClass, hasClass, addClass} from 'common/js/util'
   import weStore from 'common/js/localforage'
-
+  import {showModeMixin} from 'common/js/mixins'
+  import {showMode, CSS} from 'common/js/config'
   const LOCK_CLASSNAME = 'icon-suo'
   export default {
+    mixins: [showModeMixin],
     data() {
       return {
         courses: [],
@@ -38,7 +40,8 @@
         'currentCourses',
         'currentCourse',
         'needUnlock',
-        'needLightStar'
+        'needLightStar',
+        'mode'
       ])
     },
     mounted() {
@@ -50,6 +53,7 @@
         return
       }
       this.$nextTick(() => {
+        this._lightPassed()
         weStore.getItem(this.currentCourses.class_id.toString()).then((val) => {
           let challengingIndex = val['challengingIndex'] || 1
           for (let i = 0; i < challengingIndex; i++) {
@@ -64,6 +68,28 @@
       })
     },
     methods: {
+      _lightPassed() {
+        // 点亮通关，新关卡就点亮第一个，黑夜模式撤销变化
+        let passedNum = JSON.parse(localStorage.getItem(this.currentCourses.class_id)) || ''
+        passedNum = passedNum ? passedNum.challengingIndex : 1
+
+        if (this.mode === showMode.night) {
+          for (let i = 0; i < passedNum; i++) {
+            this.$refs.courseInner[i].style.color = CSS.night.colorTheme
+            this.$refs.courseInner[i].style.border = ''
+          }
+          console.log('night courses')
+        }
+        if (this.mode === showMode.day) {
+          for (let i = 0; i < passedNum; i++) {
+            // this.$refs.courseInner[i].style.background = 'linear-gradient(#d3d7d4, #aaa)'
+            // this.$refs.courseInner[i].style.background = ''
+            this.$refs.courseInner[i].style.color = CSS.day.colorTheme
+            this.$refs.courseInner[i].style.borderColor = CSS.day.colorTheme
+          }
+          console.log('day courses')
+        }
+      },
       lightStar(course) {
         /* weStore.getItem(this.currentCourses.class_id.toString()).then((val) => {
           if (course === 0) {
@@ -83,6 +109,10 @@
         }).catch((err) => {
           console.log('err val: ' + course + ' base listview func lightStar err: ' + err)
         }) */
+
+        /* // 高亮已通关
+        this.$refs.courseInner[course - 1].style.color = 'red'
+        console.log(course) */
 
         // 同步获取数据
         let starsArr = JSON.parse(localStorage.getItem(this.currentCourses.class_id)) || ''
@@ -132,6 +162,9 @@
       },
       needLightStar() {
         this.lightStar(this.currentCourse)
+      },
+      mode() {
+        this._lightPassed()
       }
     },
     components: {
@@ -147,11 +180,12 @@
     position: fixed
     width: 100%
     top: 50px
-    bottom: 50px
+    bottom: 0px
     .courses
       height: 100%
       overflow: hidden
-      background: $color-background
+      color: $n-colorTheme
+      background: $n-background
       .course-wrapper
         display: flex
         flex-wrap: wrap
@@ -161,6 +195,8 @@
           width: 30%
           height: 100px
           margin: 10px 3px
+          border-radius: 2px
+          font-size: $font-size-large
           .title
             display: flex
             position: relative
@@ -174,8 +210,10 @@
             width: 80%
             margin: 0 auto
             text-align: center
+            .star
+              color: $n-colorTheme
             .lighted
-              color: $color-D-star-light
+              color: $n-colorStarLight
           .lock
             position: absolute
             width: 100%

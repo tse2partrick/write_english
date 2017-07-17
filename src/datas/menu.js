@@ -1,4 +1,4 @@
-export const menu = [
+export const Menu = [
   {
     master: '大学英语四级',
     class_id: 5,
@@ -1177,5 +1177,104 @@ export const menu = [
       name: '电话常用词汇',
       class_num: 13
     }
+  }
+]
+
+export const Tip = [
+  {
+    e: 'While there is life there is hope.',
+    c: '一息若存,希望不灭.'
+  },
+  {
+    e: 'I am a slow walker,but I never walk backwards.',
+    c: '我走得很慢,但是我从来不会后退.'
+  },
+  {
+    e: 'Never underestimate your power to change yourself!',
+    c: '永远不要低估你改变自我的能力!'
+  },
+  {
+    e: 'Nothing is impossible!',
+    c: '没有什么不可能!'
+  },
+  {
+    e: 'Nothing for nothing.',
+    c: '不费力气,一无所得.'
+  },
+  {
+    e: 'The man who has made up his mind to win will never say "impossible ".',
+    c: '凡是决心取得胜利的人是从来不说“不可能的”.'
+  },
+  {
+    e: 'I will greet this day with love in my heart.',
+    c: '我要用全身心的爱来迎接今天 '
+  },
+  {
+    e: 'Do what you say,say what you do',
+    c: '做你说过的,说你能做的'
+  },
+  {
+    e: 'I can make it through the rain.I can stand up once again on my own.',
+    c: '我可以穿越云雨,也可以东山再起'
+  },
+  {
+    e: 'All things come to those who wait.',
+    c: '苍天不负有心人'
+  },
+  {
+    e: 'A thousand-li journey is started by taking the first step.',
+    c: '千里之行,始于足下.'
+  },
+  {
+    e: 'Never,never,never,never give up.',
+    c: '永远不要、不要、不要、不要放弃.'
+  },
+  {
+    e: 'A man is not old as long as he is seeking something.A man is not old until regrets take the place of dreams.',
+    c: '只要一个人还有追求,他就没有老.直到后悔取代了梦想,一个人才算老.'
+  },
+  {
+    e: 'You have to believe in yourself .That\'s the secret of success.',
+    c: '人必须相信自己,这是成功的秘诀.'
+  },
+  {
+    e: 'One\'s real value first lies in to what degree and what sense he set himself.(Einstein Germany)',
+    c: '一个人的真正价值首先决定于他在什么程度上和在什么意义上从自我解放出来.'
+  },
+  {
+    e: 'One thing I know,that is I know nothing.',
+    c: '我所知道的一件事就是我一无所知.'
+  },
+  {
+    e: 'Cease to struggle and you cease to live.',
+    c: '生命不止,奋斗不息.'
+  },
+  {
+    e: 'Victory won\'t come to me unless I go to it.',
+    c: '胜利是不会向我们走来的,我必须自己走向胜利.'
+  },
+  {
+    e: 'We must accept finite disappointment,but we must never lose infinite hope',
+    c: '我们必须接受失望,因为它是有限的,但千万不可失去希望,因为它是无穷的.'
+  },
+  {
+    e: 'It\'s great to be great ,but it\'s greater to be human.',
+    c: '成为伟人固然伟大,但成为真正的人更加伟大．'
+  },
+  {
+    e: 'Never give up,Never lose the opportunity to succeed',
+    c: '不放弃就有成功的机会.'
+  },
+  {
+    e: 'Don\'t try so hard,the best things come when you least expect them to.',
+    c: '不要着急,最好的总会在最不经意的时候出现.'
+  },
+  {
+    e: 'Achievement provides the only real pleasure in life .',
+    c: '有所成就是人生唯一的真正乐趣.'
+  },
+  {
+    e: 'Man struggles upwards; water flows downwards.',
+    c: '人往高处走,水往低处流.'
   }
 ]

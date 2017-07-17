@@ -1,6 +1,6 @@
 <template>
   <transition name="slide">
-    <scroll :data="perfectArr" class="dictation" ref="dictation">
+    <scroll :data="perfectArr" class="dictation" ref="dictation" :style="getDayBackgroundSty">
       <div>
         <top :title="getTitle" :backMethodCustom="backMethodCustom" @back="onBack"></top>
         <div class="sub-title">{{getSubTitle}}</div>
@@ -9,18 +9,19 @@
             <div class="title">
               <span @click="speak(item.nons)" v-if="showAnswer">{{item.cWord}}</span>
               <span @click="speak(item.nons)">
-                <i class="iconfont icon-shengyin" v-show="!playing"></i>
-                <i class="iconfont icon-shengyin1" v-show="playing"></i>
+                <i class="iconfont icon-shengyin" v-show="!playing && item.nons.indexOf('补充') === -1"></i>
+                <i class="iconfont icon-shengyin1" v-show="playing && item.nons.indexOf('补充') === -1"></i>
+                <span v-show="item.nons.indexOf('补充') !== -1">{{item.cWord}}</span>
               </span>
             </div>
-            <p class="word-right" :class="{'hidden': !showAnswer || nullAnswer}">{{item.eWord}}</p>
+            <p class="word-right" v-show="showAnswer && !nullAnswer">{{item.eWord}}</p>
           </div>
           <div class="content-input">
-            <input type="text" class="user_write" ref="userWrite" />
-            <span class="btn" @click="test" v-show="!showAnswer || nullAnswer" ref="testBtn">提交</span>
-            <span class="btn" @click="next" v-show="showAnswer && !nullAnswer" ref="nextBtn">下一题</span>
-            <p class="answer" :class="{'hidden': !showAnswer}">{{getTestAnswer}}</p>
-            <p class="answer" :class="{'hidden': !nullAnswer}" ref="nonTip">请输入单词再提交</p>
+            <input type="text" class="user_write" ref="userWrite" :style="getNightColorWhiteSty" @click="onFocus" />
+            <span class="btn" @click="test" v-show="!showAnswer || nullAnswer" ref="testBtn" :style="getDayBackgroundMenuSty">提交</span>
+            <span class="btn" @click="next" v-show="showAnswer && !nullAnswer" ref="nextBtn" :style="getDayBackgroundMenuSty">下一题</span>
+            <p class="answer" v-show="showAnswer">{{getTestAnswer}}</p>
+            <p class="answer" v-show="nullAnswer" ref="nonTip">请输入单词再提交</p>
           </div>
         </div>
         <div class="endFlag" v-show="endFlag">
@@ -31,22 +32,26 @@
               <th>正确单词</th>
               <!-- <th>释义</th> -->
             </tr>
-            <tr v-for="item in wrongArr">
+            <tr v-for="(item, index) in wrongArr">
               <td v-html="item.wrongWord"></td>
-              <td v-html="item.trueEWord"></td>
+              <td @click="speak(item.trueNons, index)">
+                <span>{{item.trueEWord}}</span>
+                <i class="iconfont icon-shengyin" v-if="item.trueEWord.indexOf('补充') === -1 && index !== currentPlayIndex"></i>
+                <i class="iconfont icon-shengyin1" v-if="item.trueEWord.indexOf('补充') === -1 && index === currentPlayIndex"></i>
+              </td>
               <!-- 移动端空间不够 <td v-html="item.trueCWord"></td> -->
             </tr>
             <tr>
               <td colspan="2">
-                <button class="btn" @click="restart">重新挑战</button>
-                <button class="btn" @click="btnNextCourse" v-show="getCourseendFlag">挑战下一关</button>
+                <span class="btn" @click="restart" :style="getDayBackgroundMenuSty">重新挑战</span>
+                <span class="btn" @click="btnNextCourse" v-show="getCourseendFlag && score === remoteData.length" :style="getDayBackgroundMenuSty">挑战下一关</span>
               </td>
             </tr>
           </table>
           <div class="perfect" v-show="!wrongArr.length">
-            <span class="perfectTip">{{perfectArr[Math.random() * 3 | 0]}}</span>
-            <button class="btn btn-in-table" @click="restart">再加深一遍</button>
-            <button class="btn btn-in-table" @click="btnNextCourse" v-show="getCourseendFlag">挑战下一关</button>
+            <p class="perfectTip">{{perfectArr[Math.random() * 3 | 0]}}</p>
+            <span class="btn btn-in-table" @click="restart" :style="getDayBackgroundMenuSty">再加深一遍</span>
+            <span class="btn btn-in-table" @click="btnNextCourse" v-show="getCourseendFlag && score === remoteData.length" :style="getDayBackgroundMenuSty">挑战下一关</span>
           </div>
         </div>
         <audio ref="audio" @ended="onPlayEnd"></audio>
@@ -61,12 +66,12 @@
   import animations from 'create-keyframe-animation'
   import {mapGetters, mapMutations} from 'vuex'
   import {prefixStyle} from 'common/js/util'
-  import {getWordsMixin, challengeMixin} from 'common/js/mixins'
-  import {Mode} from 'common/js/config'
+  import {getWordsMixin, challengeMixin, showModeMixin} from 'common/js/mixins'
+  import {challengeMode, showMode, CSS} from 'common/js/config'
 
   const ANIMATION = prefixStyle('animation')
   export default {
-    mixins: [getWordsMixin, challengeMixin],
+    mixins: [getWordsMixin, challengeMixin, showModeMixin],
     data() {
       return {
         currentIndex: 0,
@@ -76,10 +81,11 @@
         score: 0,
         endFlag: false,
         wrongArr: [],
-        perfectArr: ['厉害了，全对！', '完美！请再接再厉', 'Perfect!!!', '求求你把我打通关吧'],
-        mode: Mode.dictation.cName,
-        backMethodCustom: true,
-        playing: false
+        perfectArr: ['厉害了，全对！', '完美！请再接再厉', 'Perfect!!!', 'up up !'],
+        challengeMode: challengeMode.dictation.cName,
+        backMethodCustom: false,
+        playing: false,
+        currentPlayIndex: null
       }
     },
     created() {
@@ -102,6 +108,9 @@
       })
     },
     computed: {
+      getAnswerCls() {
+        return this.mode === showMode.day ? {'color': CSS.night.colorBlack} : {'color': CSS.night.colorWhite}
+      },
       getCourseendFlag() {
         return this.currentCourse === this.currentClasses.length ? '' : 'false'
       },
@@ -109,7 +118,7 @@
         return this.currentCourses.name + ' - 第' + this.currentCourse + '课'
       },
       getSubTitle() {
-        return this.endFlag ? '测试结果' : Mode.dictation.cName
+        return this.endFlag ? '测试结果' : challengeMode.dictation.cName
       },
       getTestAnswer() {
         if (!this.answer) {
@@ -124,12 +133,16 @@
         'currentClasses',
         'currentCourses',
         'currentCourse',
-        'remoteData'
+        'mode'
       ])
     },
     methods: {
+      onFocus() {
+        this.$refs.userWrite.focus()
+      },
       onPlayEnd() {
         this.playing = false
+        this.currentPlayIndex = null
       },
       onBack() {
         this.$router.push({
@@ -181,11 +194,13 @@
         } else {
           this.wrongArr.push({
             wrongWord: this.answer,
-            trueEWord: this.shuffleRemoteData[this.currentIndex]['eWord']
+            trueEWord: this.shuffleRemoteData[this.currentIndex]['eWord'],
+            trueNons: this.shuffleRemoteData[this.currentIndex]['nons']
             // trueCWord: this.remoteData[this.currentIndex]['cWord']
           })
         }
         this.showAnswer = true
+        console.log(this.score + ' - ' + this.remoteData.length)
       },
       next() {
         this._nextInit()
@@ -193,13 +208,22 @@
         if (this.currentIndex === this.shuffleRemoteData.length) {
           this.endFlag = true
           this.end()
+          return
         }
 
         let nons = this.shuffleRemoteData[this.currentIndex].nons
         this.speak(nons)
       },
-      speak(nons) {
+      speak(nons, index) {
+        // 过滤没有发音的单词
+        if (nons.indexOf('补充') !== -1) {
+          return
+        }
         this.playing = true
+
+        if (index >= 0) {
+          this.currentPlayIndex = index
+        }
         if (this.$refs.audio.src === nons) {
           this.$refs.audio.play()
           return
@@ -209,7 +233,7 @@
       },
       end() {
         if (this.score === this.shuffleRemoteData.length) {
-          this._lightStar(Mode.dictation.eName)
+          this._lightStar(challengeMode.dictation.eName)
         }
         setTimeout(() => {
           this.$refs.dictation.refresh()
@@ -224,7 +248,7 @@
         this.setCurrentCourse(course)
         this._getWords()
         this.$router.push({
-          path: `/courses/${this.currentCourse}/${Mode.dictation.eName}`
+          path: `/courses/${this.currentCourse}`
         })
         this._setLearning()
       },
@@ -253,24 +277,23 @@
 
 <style lang="stylus" scoped>
   @import "~common/stylus/variable"
-  .hidden
-    visibility: hidden
   .btn
     display: inline-block
     padding: 10px
-    margin: 20px
-    background: #000
-    border-radius: 5px
-    color: #FFF
+    color: $n-colorWhite
     font-size: $font-size-large
+    background: $n-background
+    border: 1px solid $n-colorWhite
+    border-radius: 10px
   .dictation
     position: fixed
     top: 0
     bottom: 0
     width: 100%
-    background: $color-background
+    background: $n-background
     .sub-title
       text-align: center
+      padding-top: 10px
     .content-wrapper
       position: relative
       bottom: 50px
@@ -278,7 +301,7 @@
       font-size: $font-size-large-x
       .content
         margin: 0 auto
-        margin-top: 150px
+        margin-top: 30%
         text-align: center
         .title
           margin-bottom: 20px
@@ -286,31 +309,45 @@
         text-align: center
         .user_write
           background: none
-          color: #fff
+          color: $n-colorBlack
           margin-top: 30px
           margin-bottom: 10px
-          border-bottom: 1px solid #fff
+          border-bottom: 1px solid $n-colorBlack
+          width: 200px
+        .answer
+          position: relative
     .endFlag
       position: relative
       display: flex
-      bottom: 50px
+      width: 100%
       height: 100%
       .haveWrong
         margin-top: 50px
         width: 100%
         text-align: left
         & caption
-          margin: 20px 0
+          margin-bottom: 20px
         & tr th
           padding: 5px
         & tr td
-          padding: 5px
+          padding: 15px
         & tr:last-child td
           text-align: center
           padding-top: 20px
           .btn-in-table
             width: 200px
             margin: 0 20px
+      .perfect
+        position: absolute
+        top: 0
+        left: 0
+        bottom: 0
+        right: 0
+        width: 100%
+        height
+        margin: auto
+        .perfectTip
+          margin: 20px auto
   .slide-enter-active, .slide-leave-active
     transition: all 0.3s
   .slide-enter, .slide-leave-to

@@ -1,6 +1,6 @@
 <template>
   <transition name="slide">
-    <scroll :data="remoteData" class="write-detail" ref="writeDetail" v-if="remoteData.length">
+    <scroll :data="remoteData" class="recall" ref="recall" v-if="remoteData.length" :style="getDayBackgroundSty">
       <div>
         <top :title="getTitle" class="needsclick" :backMethodCustom="backMethodCustom" @back="onBack"></top>
         <div class="sub-title">{{getSubTitle}}</div>
@@ -9,18 +9,18 @@
             <div class="title">
               <span @click="speak(item.nons)">
                 {{item.cWord}}
-                <i class="iconfont icon-shengyin" v-if="!playing"></i>
-                <i class="iconfont icon-shengyin1" v-if="playing"></i>
+                <i class="iconfont icon-shengyin" v-if="!playing && item.nons.indexOf('补充') === -1"></i>
+                <i class="iconfont icon-shengyin1" v-if="playing && item.nons.indexOf('补充') === -1"></i>
               </span>
             </div>
-            <p class="word-right" :class="{'hidden': !showAnswer || nullAnswer}">{{item.eWord}}</p>
+            <p class="word-right" v-show="showAnswer && !nullAnswer">{{item.eWord}}</p>
           </div>
           <div class="content-input">
-            <input type="text" class="user_write" ref="userWrite" />
-            <span class="btn" @click.stop.prevent="test" v-show="!showAnswer || nullAnswer" ref="testBtn">提交</span>
-            <span class="btn" @click.stop.prevent="next" v-show="showAnswer && !nullAnswer" ref="nextBtn">下一题</span>
-            <p class="answer" :class="{'hidden': !showAnswer}">{{getTestAnswer}}</p>
-            <p class="answer" :class="{'hidden': !nullAnswer}" ref="nonTip">请输入单词再提交</p>
+            <input type="text" class="user_write" ref="userWrite" :style="getNightColorWhiteSty" @click="onFocus" />
+            <span class="btn" @click.stop.prevent="test" v-show="!showAnswer || nullAnswer" ref="testBtn" :style="getDayBackgroundMenuSty">提交</span>
+            <span class="btn" @click.stop.prevent="next" v-show="showAnswer && !nullAnswer" ref="nextBtn" :style="getDayBackgroundMenuSty">下一题</span>
+            <p class="answer" v-show="showAnswer">{{getTestAnswer}}</p>
+            <p class="answer" v-show="nullAnswer" ref="nonTip">请输入单词再提交</p>
           </div>
         </div>
         <div class="endFlag" v-show="endFlag">
@@ -31,22 +31,26 @@
               <th>正确单词</th>
               <!-- <th>释义</th> -->
             </tr>
-            <tr v-for="item in wrongArr">
+            <tr v-for="(item, index) in wrongArr">
               <td v-html="item.wrongWord"></td>
-              <td v-html="item.trueEWord"></td>
-              <!-- 移动端空间不够 <td v-html="item.trueCWord"></td> -->
+              <td @click="speak(item.trueNons, index)">
+                <span>{{item.trueEWord}}</span>
+                <i class="iconfont icon-shengyin" v-if="item.trueEWord.indexOf('补充') === -1 && index !== currentPlayIndex"></i>
+                <i class="iconfont icon-shengyin1" v-if="item.trueEWord.indexOf('补充') === -1 && index === currentPlayIndex"></i>
+              </td>
+              <!-- 移动端空间不够，不显示中文<td v-html="item.trueCWord"></td> -->
             </tr>
             <tr>
               <td colspan="2">
-                <span class="btn" @click="restart">重新挑战</span>
-                <span class="btn" @click="btnNextCourse" v-show="getCourseendFlag">挑战下一关</span>
+                <span class="btn" @click="restart" :style="getDayBackgroundMenuSty">重新挑战</span>
+                <span class="btn" @click="btnNextCourse" v-show="getCourseendFlag && score === remoteData.length" :style="getDayBackgroundMenuSty">挑战下一关</span>
               </td>
             </tr>
           </table>
           <div class="perfect" v-show="!wrongArr.length">
-            <div class="perfectTip">{{perfectArr[Math.random() * 3 | 0]}}</div>
-            <span class="btn btn-in-table" @click="restart">再加深一遍</span>
-            <span class="btn btn-in-table" @click="btnNextCourse" v-show="getCourseendFlag && score === 20">挑战下一关</span>
+            <p class="perfectTip">{{perfectArr[Math.random() * 3 | 0]}}</p>
+            <span class="btn btn-in-table" @click="restart" :style="getDayBackgroundMenuSty">再加深一遍</span>
+            <span class="btn btn-in-table" @click="btnNextCourse" v-show="getCourseendFlag && score === remoteData.length" :style="getDayBackgroundMenuSty">挑战下一关</span>
           </div>
         </div>
         <audio ref="audio" @ended="onPlayEnd"></audio>
@@ -61,12 +65,11 @@
   import animations from 'create-keyframe-animation'
   import {mapGetters, mapMutations} from 'vuex'
   import {prefixStyle} from 'common/js/util'
-  import {getWordsMixin, challengeMixin} from 'common/js/mixins'
-  import {Mode} from 'common/js/config'
-
+  import {getWordsMixin, challengeMixin, showModeMixin} from 'common/js/mixins'
+  import {challengeMode, showMode, CSS} from 'common/js/config'
   const ANIMATION = prefixStyle('animation')
   export default {
-    mixins: [getWordsMixin, challengeMixin],
+    mixins: [getWordsMixin, challengeMixin, showModeMixin],
     data() {
       return {
         currentIndex: 0,
@@ -76,10 +79,11 @@
         score: 0,
         endFlag: false,
         wrongArr: [],
-        perfectArr: ['厉害了，全对！', '完美！请再接再厉', 'Perfect!!!', '求求你把我打通关吧'],
-        mode: Mode.recall.cName,
-        backMethodCustom: true,
-        playing: false
+        perfectArr: ['厉害了，全对！', '完美！请再接再厉', 'Perfect!!!', 'up up !!'],
+        challengeMode: challengeMode.recall.cName,
+        backMethodCustom: false,
+        playing: false,
+        currentPlayIndex: null
       }
     },
     created() {
@@ -104,6 +108,17 @@
       })
     },
     computed: {
+      getAnswerCls() {
+        // 红绿色 - 做回答正确错误的样式
+        /* if (!this.answer) {
+          return
+        }
+        if (this.endFlag) {
+          return
+        }
+        return this.answer.toLowerCase() === this.shuffleRemoteData[this.currentIndex]['eWord'].toLowerCase() ? 'green' : 'red' */
+        return this.mode === showMode.day ? {'color': CSS.night.colorBlack} : {'color': CSS.night.colorWhite}
+      },
       getCourseendFlag() {
         return this.currentCourse === this.currentClasses.length ? '' : 'false'
       },
@@ -111,7 +126,7 @@
         return this.currentCourses.name + ' - 第' + this.currentCourse + '课'
       },
       getSubTitle() {
-        return this.endFlag ? '测试结果' : Mode.recall.cName
+        return this.endFlag ? '测试结果' : challengeMode.recall.cName
       },
       getTestAnswer() {
         if (!this.answer) {
@@ -125,12 +140,17 @@
       ...mapGetters([
         'currentClasses',
         'currentCourses',
-        'currentCourse'
+        'currentCourse',
+        'mode'
       ])
     },
     methods: {
+      onFocus() {
+        this.$refs.userWrite.focus()
+      },
       onPlayEnd() {
         this.playing = false
+        this.currentPlayIndex = null
       },
       onBack() {
         this.$router.push({
@@ -185,7 +205,8 @@
         } else {
           this.wrongArr.push({
             wrongWord: this.answer,
-            trueEWord: this.remoteData[this.currentIndex]['eWord']
+            trueEWord: this.shuffleRemoteData[this.currentIndex]['eWord'],
+            trueNons: this.shuffleRemoteData[this.currentIndex]['nons']
             // trueCWord: this.remoteData[this.currentIndex]['cWord']
           })
         }
@@ -199,22 +220,36 @@
           this.end()
         }
       },
-      speak(nons) {
+      speak(nons, index) {
+        // 过滤没有发音的单词
+        if (nons.indexOf('补充') !== -1) {
+          return
+        }
         this.playing = true
+
+        if (index >= 0) {
+          this.currentPlayIndex = index
+        }
         if (this.$refs.audio.src === nons) {
           this.$refs.audio.play()
           return
         }
-        this.$refs.audio.src = nons
-        this.$refs.audio.play()
+
+        if (this.timer) {
+          clearTimeout(this.timer)
+        }
+        this.timer = setTimeout(() => {
+          this.$refs.audio.src = nons
+          this.$refs.audio.play()
+        }, 20)
       },
       end() {
         if (this.score === this.remoteData.length) {
-          this._lightStar(Mode.recall.eName)
+          this._lightStar(challengeMode.recall.eName)
         }
 
         setTimeout(() => {
-          this.$refs.writeDetail.refresh()
+          this.$refs.recall.refresh()
         }, 20)
       },
       restart() {
@@ -231,7 +266,7 @@
 
         this._getWords()
         this.$router.push({
-          path: `/courses/${this.currentCourse}/${Mode.recall.eName}`
+          path: `/courses/${this.currentCourse}`
         })
         this._setLearning()
       },
@@ -259,23 +294,24 @@
 
 <style lang="stylus" scope>
   @import "~common/stylus/variable"
-  .hidden
-    visibility: hidden
   .btn
     display: inline-block
     padding: 10px
-    background: #000
-    border-radius: 5px
-    color: #FFF
+    color: $n-colorWhite
     font-size: $font-size-large
-  .write-detail
+    background: $n-background
+    color: $n-colorWhite
+    border: 1px solid $n-colorWhite
+    border-radius: 10px
+  .recall
     position: fixed
     top: 0
     bottom: 0
     width: 100%
-    background: $color-background
+    background: $n-background
     .sub-title
       text-align: center
+      padding-top: 10px
     .content-wrapper
       position: relative
       bottom: 50px
@@ -288,18 +324,16 @@
         .title
           margin-bottom: 20px
       .content-input
-        margin-left: 10%
         text-align: center
         .user_write
           background: none
-          color: #fff
+          color: $n-colorBlack
           margin-top: 30px
           margin-bottom: 10px
-          border-bottom: 1px solid #fff
+          border-bottom: 1px solid $n-colorBlack
+          width: 200px
         .answer
           position: relative
-          text-align: left
-          left: 40%
     .endFlag
       position: relative
       display: flex
@@ -310,11 +344,11 @@
         width: 100%
         text-align: left
         & caption
-          margin: 20px 0
+          margin-bottom: 20px
         & tr th
           padding: 5px
         & tr td
-          padding: 5px
+          padding: 15px
         & tr:last-child td
           text-align: center
           padding-top: 20px
@@ -328,7 +362,6 @@
         bottom: 0
         right: 0
         width: 100%
-        height
         margin: auto
         .perfectTip
           margin: 20px auto

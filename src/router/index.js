@@ -1,13 +1,43 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Classes from 'components/classes/classes'
-import ClassesDetail from 'components/classes-detail/classes-detail'
-import Courses from 'components/courses/courses'
-import Course from 'components/course/course'
-import Recall from 'components/course-challenge/recall'
-import Dictation from 'components/course-challenge/dictation'
-import LineMatch from 'components/course-challenge/line-match'
+
 Vue.use(Router)
+
+const Classes = (resolve) => {
+  import('components/classes/classes').then((module) => {
+    resolve(module)
+  })
+}
+const ClassesDetail = (resolve) => {
+  import('components/classes-detail/classes-detail').then((module) => {
+    resolve(module)
+  })
+}
+const Courses = (resolve) => {
+  import('components/courses/courses').then((module) => {
+    resolve(module)
+  })
+}
+const Course = (resolve) => {
+  import('components/course/course').then((module) => {
+    resolve(module)
+  })
+}
+const Recall = (resolve) => {
+  import('components/course-challenge/recall').then((module) => {
+    resolve(module)
+  })
+}
+const Dictation = (resolve) => {
+  import('components/course-challenge/dictation').then((module) => {
+    resolve(module)
+  })
+}
+const LineMatch = (resolve) => {
+  import('components/course-challenge/line-match').then((module) => {
+    resolve(module)
+  })
+}
 
 export default new Router({
   routes: [

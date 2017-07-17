@@ -1,7 +1,7 @@
 import {mapGetters, mapMutations, mapActions} from 'vuex'
 import {getWords} from 'datas/words'
 import {shuffle} from './util'
-import {Mode} from './config'
+import {challengeMode, showMode, CSS} from './config'
 import weStore from 'common/js/localforage'
 export const getWordsMixin = {
   computed: {
@@ -31,10 +31,11 @@ export const getWordsMixin = {
         this.setNonsArr([])
       }
       getWords(this.currentCourses.class_id, this.currentCourse).then((res) => {
-        let str = res.data.slice(32240, 75900).toString()
+        let str = res.data.slice(32240, 80000).toString()
         let reg = new RegExp('<?.title=.*>', 'g')
         let result = str.match(reg)[0]// .replace(/\s/g, '')
-        let dataArr = result.split('title').slice(1)
+        let dataArr = result.split('title')// .slice(1)
+        dataArr.splice(0, 3)
         let {wordsAndNonsArr, cWordsArr, eWordsArr, nonsArr} = this._normalize(dataArr)
         this.setWord({wordsAndNonsArr, cWordsArr, eWordsArr, nonsArr})
       }).catch((err) => {
@@ -49,7 +50,6 @@ export const getWordsMixin = {
       let eWordsArr = []
       let nonsArr = []
       // 如果没有声音资源补一个错误的地址
-
       arr.forEach((item) => {
         arrCopy.push(item.slice(0, 170))
       })
@@ -67,7 +67,7 @@ export const getWordsMixin = {
         arr = arr.slice(0, 40)
       } */
       arr.forEach((item) => {
-        let itemWord = item.slice(118)
+        let itemWord = item// .slice(118)
         // 先得到w_right这个html元素，这个元素包含着词霸正确单词，提取它准备再过滤加入eWordsArr
         if (itemWord.indexOf('w_right') !== -1) {
           // reg = /<span class="w_right".*>([a-zA-Z|\\'|\/]+\s?)+<\/span>/
@@ -166,7 +166,7 @@ export const challengeMixin = {
       let num = this.needUnlock + 1
       this.setNeedUnlock(num)
 
-      challengeName = challengeName === Mode.recall.eName ? Mode.recall.eName : challengeName === Mode.dictation.eName ? Mode.dictation.eName : Mode.lineMatch.eName
+      challengeName = challengeName === challengeMode.recall.eName ? challengeMode.recall.eName : challengeName === challengeMode.dictation.eName ? challengeMode.dictation.eName : challengeMode.lineMatch.eName
 
       /* let course = `${this.currentCourses.class_id}-${this.currentCourse}`
       weStore.getItem(course).then((val) => {
@@ -234,10 +234,62 @@ export const challengeMixin = {
       }).catch((err) => {
         console.log('js mixins fnc _setLearning() err: ' + err)
       })
+
+      localStorage.setItem(this.learningName, JSON.stringify(learning))
     },
     ...mapMutations({
       'setNeedUnlock': 'SET_NEED_UNLOCK',
       'setNeedLightStar': 'SET_NEED_LIGHT_STAR'
+    })
+  }
+}
+
+export const showModeMixin = {
+  created() {
+    // this._setMode()
+  },
+  computed: {
+    // single-select option style
+    getDaySSOSty() {
+      return this.mode === showMode.day ? {'background': CSS.day.colorThemeLight, 'color': CSS.day.colorWhite} : ''
+    },
+
+    // single-select style
+    getDaySSSty() {
+      return this.mode === showMode.day ? {'background': CSS.day.colorTheme, 'color': CSS.day.colorWhite} : ''
+    },
+    getDayBlackWordSty() {
+      return this.mode === showMode.day ? {'color': CSS.day.colorBlack} : ''
+    },
+    getNightColorWhiteSty() {
+      return this.mode === showMode.night ? {'border-color': CSS.night.colorWhite, 'color': CSS.night.colorWhite} : ''
+    },
+    getShowModeCls() {
+      return this.mode === showMode.day ? 'iconfont icon-taiyang' : 'iconfont icon-yueliang'
+    },
+    getWHeaderSty() {
+      return this.mode === showMode.day ? {'color': CSS.day.colorWhite, 'background': CSS.day.colorTheme} : ''
+    },
+    getDayColorThemeSty() {
+      return this.mode === showMode.day ? {'color': CSS.day.colorTheme} : ''
+    },
+    getDayBackgroundSty() {
+      return this.mode === showMode.day ? {'background': CSS.day.background} : ''
+    },
+    getDayBackgroundMenuSty() {
+      return this.mode === showMode.day ? {'background': CSS.day.backgroundMenu, 'color': CSS.day.colorWhite} : ''
+    },
+    ...mapGetters([
+      'mode'
+    ])
+  },
+  methods: {
+    _setMode() {
+      let mode = localStorage.getItem('mode')
+      this.setMode(mode)
+    },
+    ...mapMutations({
+      'setMode': 'SET_MODE'
     })
   }
 }
