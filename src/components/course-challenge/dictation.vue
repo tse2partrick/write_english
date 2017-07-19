@@ -225,8 +225,11 @@
           this.$refs.audio.play()
           return
         }
-        this.$refs.audio.src = nons
-        this.$refs.audio.play()
+        clearTimeout(this.timer)
+        this.timer = setTimeout(() => {
+          this.$refs.audio.src = nons
+          this.$refs.audio.play()
+        }, 20)
       },
       end() {
         if (this.score === this.shuffleRemoteData.length) {
@@ -255,6 +258,9 @@
         this.endFlag = false
         this.wrongArr = []
         this.speak(this.shuffleRemoteData[0].nons)
+        setTimeout(() => {
+          this.$refs.dictation.refresh()
+        }, 20)
       },
       _nextInit() {
         this.showAnswer = false

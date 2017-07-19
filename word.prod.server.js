@@ -2,7 +2,7 @@ var express = require('express')
 var axios = require('axios')
 var util = require("util")
 var config = require('./config')
-
+var compression = require('compression')
 
 var app = express()
 var apiRoutes = express.Router()
@@ -25,6 +25,8 @@ apiRoutes.get('/word', function (req, res) {
 app.use('/api', apiRoutes)
 
 app.use(express.static('./dist'))
+
+app.use(compression())
 
 var port = process.env.PORT || config.build.port
 

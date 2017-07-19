@@ -42,7 +42,8 @@
     computed: {
       ...mapGetters([
         'currentCourses',
-        'currentCourse'
+        'currentCourse',
+        'needUnlock'
       ])
     },
     mounted() {
@@ -51,6 +52,7 @@
     methods: {
       _lighted() {
         let stars = JSON.parse(localStorage.getItem(this.currentCourses.class_id)) || ''
+        console.log(stars)
         if (!stars) {
           return
         }
@@ -85,6 +87,9 @@
     },
     watch: {
       currentCourse() {
+        this._lighted()
+      },
+      needUnlock() {
         this._lighted()
       }
     }

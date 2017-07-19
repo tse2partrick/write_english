@@ -267,6 +267,9 @@
         this.currentIndex = 0
         this.endFlag = false
         this.wrongArr = []
+        setTimeout(() => {
+          this.$refs.recall.refresh()
+        }, 20)
       },
       _nextInit() {
         this.showAnswer = false
