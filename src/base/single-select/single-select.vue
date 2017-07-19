@@ -52,7 +52,6 @@
     methods: {
       _lighted() {
         let stars = JSON.parse(localStorage.getItem(this.currentCourses.class_id)) || ''
-        console.log(stars)
         if (!stars) {
           return
         }

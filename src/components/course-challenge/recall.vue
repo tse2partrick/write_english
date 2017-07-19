@@ -29,6 +29,7 @@
             <tr>
               <th>写错单词</th>
               <th>正确单词</th>
+              <th>中文释义</th>
               <!-- <th>释义</th> -->
             </tr>
             <tr v-for="(item, index) in wrongArr">
@@ -38,10 +39,10 @@
                 <i class="iconfont icon-shengyin" v-if="item.trueEWord.indexOf('补充') === -1 && index !== currentPlayIndex"></i>
                 <i class="iconfont icon-shengyin1" v-if="item.trueEWord.indexOf('补充') === -1 && index === currentPlayIndex"></i>
               </td>
-              <!-- 移动端空间不够，不显示中文<td v-html="item.trueCWord"></td> -->
+              <td v-html="item.trueCWord"></td>
             </tr>
             <tr>
-              <td colspan="2">
+              <td colspan="3">
                 <span class="btn" @click="restart" :style="getDayBackgroundMenuSty">重新挑战</span>
                 <span class="btn" @click="btnNextCourse" v-show="getCourseendFlag && score === remoteData.length" :style="getDayBackgroundMenuSty">挑战下一关</span>
               </td>
@@ -198,8 +199,8 @@
           this.wrongArr.push({
             wrongWord: this.answer,
             trueEWord: this.shuffleRemoteData[this.currentIndex]['eWord'],
-            trueNons: this.shuffleRemoteData[this.currentIndex]['nons']
-            // trueCWord: this.remoteData[this.currentIndex]['cWord']
+            trueNons: this.shuffleRemoteData[this.currentIndex]['nons'],
+            trueCWord: this.remoteData[this.currentIndex]['cWord']
           })
         }
         this.showAnswer = true
@@ -340,6 +341,8 @@
         text-align: left
         & caption
           margin-bottom: 20px
+        & th
+          width: 80px
         & tr th
           padding: 5px
         & tr td
