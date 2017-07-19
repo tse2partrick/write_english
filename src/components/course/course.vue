@@ -61,7 +61,7 @@
     created() {
       if (!this.currentCourse) {
         this.$router.push({
-          path: '/courses'
+          path: '/classes'
         })
       }
     },
