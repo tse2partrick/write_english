@@ -9,6 +9,9 @@
 4. 本地存储关卡数，挑战关卡逻辑.
 5. 打包.
 
+## 设计初衷是爱词霸没有手机版本，原生APP没有WEB版的默写功能，于是想到用vue做个类似的手机版本。整体有些简陋...，数据是代理金山爱词霸网页版的数据，用正则抓出单词、发音、释义，自己再写一些关卡逻辑。
+
+
 ## Build Setup
 
 ``` bash
@@ -24,5 +27,3 @@ npm run build
 # build for production and view the bundle analyzer report
 npm run build --report
 ```
-
-For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
