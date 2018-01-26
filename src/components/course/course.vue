@@ -101,7 +101,9 @@
         this._setLearning()
       },
       _setShowHeigth() {
-        this.$refs.wordsWrapper.refresh()
+        setTimeout(() => {
+          this.$refs.wordsWrapper.refresh()
+        }, 2000)
         this.$refs.wordsWrapper.$el.style.height = this.$refs.course.clientHeight - TOP_HEIGHT - BUTTON_HEIGHT + 'px'
       },
       reChoose() {
